@@ -1,0 +1,328 @@
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Contact
+{
+    string name;
+    string number;
+    string email;
+
+public:
+    Contact(string name, string number, string email) : name(name), number(number), email(email) {}
+
+    friend istream& operator>>(istream& is, Contact& c)
+    {
+        is >> c.name >> c.number >> c.email;
+        return is;
+    }
+
+    string getName() const
+    {
+        return name;
+    }
+
+    string getNumber() const
+    {
+        return number;
+    }
+
+    string getEmail() const
+    {
+        return email;
+    }
+
+    void setName(const string& name)
+    {
+        this->name = name;
+    }
+
+    void setNumber(const string& number)
+    {
+        this->number = number;
+    }
+
+    void setEmail(const string& email)
+    {
+        this->email = email;
+    }
+
+    void display() const
+    {
+
+        cout << "Name  : " << name << endl;
+        cout << "Number: +88-" << number << endl;
+        cout << "Email : " << email << endl;
+
+    }
+
+
+};
+
+class PhoneDirectory
+{
+    vector<Contact> contacts;
+
+public:
+    void addContact(string name, string number, string email)
+    {
+        // check if number is valid
+        while (number.length() != 11 || !all_of(number.begin(), number.end(), [](char c)
+    {
+        return isdigit(c);
+        }))
+        {
+            cout << "Invalid number. Try again." << endl;
+            cout << "Enter number: ";
+            cin >> number;
+        }
+
+        contacts.push_back(Contact(name, number, email));
+        cout << "\nContact added successfully." << endl;
+        saveContacts();
+    }
+
+
+    void deleteContact(const string& name)
+    {
+          system("cls");
+        auto it = find_if(contacts.begin(), contacts.end(), [&name](const Contact& contact)
+        {
+            return contact.getName() == name;
+        });
+        if (it != contacts.end())
+        {
+            contacts.erase(it);
+            cout << "\nContact deleted successfully." << endl;
+        }
+        else
+        {
+            cout << "\nContact not found." << endl;
+        }
+        saveContacts();
+    }
+
+    void displayContacts() const
+    {
+         system("cls");
+        cout << "\n\n-------------------------Display Contacts--------------------------" << endl;
+        for (const auto& contact : contacts)
+        {
+            contact.display();
+            cout << endl;
+        }
+        cout << "-------------------------------------------------------------------" << endl;
+    }
+
+    void editContact(string name)
+    {
+        system("cls");
+        cout << "\n\n-------------------------Edit Contacts--------------------------" << endl;
+        auto it = find_if(contacts.begin(), contacts.end(), [&name](const Contact& contact)
+        {
+            return contact.getName() == name;
+        });
+        if (it != contacts.end())
+        {
+            cout << "Choose field to edit:" << endl;
+            cout << "1. Name" << endl;
+            cout << "2. Number" << endl;
+            cout << "3. Email" << endl;
+            int choice;
+            cin >> choice;
+            switch (choice)
+            {
+            case 1:
+            {
+                string newName;
+                cout << "Enter new name: ";
+                cin >> newName;
+                it->setName(newName);
+                cout << "Name updated successfully." << endl;
+                break;
+            }
+            case 2:
+            {
+                string newNumber;
+                cout << "Enter new number: ";
+                cin >> newNumber;
+                // check if number is valid
+                if (newNumber.length() != 11 || !all_of(newNumber.begin(), newNumber.end(), [](char c)
+            {
+                return isdigit(c);
+                }))
+                {
+                    cout << "Invalid number. Try again." << endl;
+                    return;
+                }
+                it->setNumber(newNumber);
+                cout << "\nNumber updated successfully." << endl;
+                break;
+            }
+            case 3:
+            {
+                string newEmail;
+                cout << "Enter new email: ";
+                cin >> newEmail;
+                it->setEmail(newEmail);
+                cout << "\nEmail updated successfully." << endl;
+                break;
+            }
+            default:
+                cout << "Invalid choice." << endl;
+            }
+        }
+        else
+        {
+            cout << "\nContact not found." << endl;
+        }
+        saveContacts();
+    }
+
+    void searchContact(const string& name) const
+    {
+         system("cls");
+        cout << "\n\n-------------------------Search Contacts--------------------------" << endl;
+        auto it = find_if(contacts.begin(), contacts.end(), [&name](const Contact& contact)
+        {
+            return contact.getName() == name;
+        });
+        if (it != contacts.end())
+        {
+            it->display();
+        }
+        else
+        {
+            cout << "\nContact not found." << endl;
+        }
+    }
+
+    void saveContacts() const
+    {
+        fstream outfile;
+        outfile.open("Phone101.txt", ios::out);
+        if (!outfile)
+        {
+            cout << "File not created!";
+        }
+        else
+        {
+            for (auto contact : contacts)
+            {
+                outfile << contact.getName() << endl;
+                outfile << contact.getNumber() << endl;
+                outfile << contact.getEmail() << endl;
+            }
+            outfile.close();
+        }
+
+
+
+        cout << "\nContacts saved to file." << endl;
+    }
+
+    void loadContacts()
+    {
+        ifstream infile("Phone101.txt");
+        if (infile.is_open())
+        {
+            //contacts.clear();
+            string name, number, email;
+            while (getline(infile, name) && getline(infile, number) && getline(infile, email))
+            {
+                contacts.push_back(Contact(name, number, email));
+            }
+            infile.close();
+            //cout << "Contacts loaded from file." << endl;
+        }
+        else
+        {
+            //cout << "Unable to open file." << endl;
+        }
+    }
+};
+
+int main()
+{
+    PhoneDirectory phoneDirectory;
+    phoneDirectory.loadContacts();
+    int choice;
+    string name, number, email;
+    cout << "****** Phone Directory Management System ******" << endl;
+    cout << "-------------------------------------------------------------------" << endl;
+    do
+    {
+        cout << "\n\nChoose operation: " << endl;
+        cout << "1. Add contact" << endl;
+        cout << "2. Delete contact" << endl;
+        cout << "3. Display contacts" << endl;
+        cout << "4. Edit contact" << endl;
+        cout << "5. Search contact" << endl;
+       // cout << "6. Save contacts" << endl;
+        cout << "6. Exit" << endl;
+        cout<<"\nEnter Your Choice : ";
+        cin >> choice;
+        switch (choice)
+        {
+        case 1:
+        {
+            system("cls");
+            cout << "Enter name  : ";
+            cin>>name;
+            cout << "Enter email : ";
+            cin >> email;
+            cout << "Enter number: ";
+            cin >> number;
+            phoneDirectory.addContact(name, number, email);
+            break;
+        }
+        case 2:
+        {
+            string name;
+            cout << "Enter name: ";
+            cin >> name;
+            phoneDirectory.deleteContact(name);
+            break;
+        }
+        case 3:
+        {
+            phoneDirectory.displayContacts();
+            break;
+        }
+        case 4:
+        {
+            string name;
+            cout << "Enter name: ";
+            cin >> name;
+            phoneDirectory.editContact(name);
+            break;
+        }
+        case 5:
+        {
+            string name;
+            cout << "Enter name: ";
+            cin >> name;
+            phoneDirectory.searchContact(name);
+            break;
+        }
+      //  case 6:
+      //  {
+     //       phoneDirectory.saveContacts();
+      //      break;
+     //   }
+        case 6:
+        {
+            cout << "Exiting program." << endl;
+            break;
+        }
+        default:
+            cout << "Invalid choice." << endl;
+        }
+    }
+    while (choice != 6);
+    return 0;
+}
